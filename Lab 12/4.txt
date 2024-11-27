@@ -1,0 +1,57 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct bk {
+    int agespecified;
+    char forr[20];
+};
+
+struct lib {
+    char title[30];
+    char author[30];
+    int pyear;
+    struct bk book;
+};
+
+int main() {
+    struct lib *ptr = (struct lib *)malloc(5 * sizeof(struct lib));
+    struct lib *temp = ptr;
+    char arr[5][30];
+    int count = 0;
+
+    for (int i = 0; i < 5; i++) {
+        printf("Enter title of book: ");
+        getchar();
+        scanf("%[^\n]", (*ptr).title);
+
+        printf("Enter author of book: ");
+        getchar();
+        scanf("%[^\n]", (*ptr).author);
+
+        printf("Enter year of publication: ");
+        scanf("%d", &(*ptr).pyear);
+
+        if ((*ptr).pyear > 2000 && count < 5) {
+            strcpy(arr[count], (*ptr).title);
+            count++;
+        }
+
+        printf("Enter specific age for readers to read: ");
+        scanf("%d", &(*ptr).book.agespecified);
+
+        printf("Enter gender recommendation: ");
+        getchar();
+        scanf("%[^\n]", (*ptr).book.forr);
+
+        ptr++;
+    }
+
+    printf("\nBooks published after 2000:\n");
+    for (int i = 0; i < count; i++) {
+        printf("Title: %s\n", arr[i]);
+    }
+
+    free(temp);
+    return 0;
+}

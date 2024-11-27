@@ -1,0 +1,28 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+struct mark{
+    int marks;
+};
+
+int main() {
+
+    int n;
+    printf("Enter size of array pointer for dynamic allocation : ");
+    scanf("%d",&n);
+    float sum=0;
+    int* ptr=(int*) malloc(n*sizeof(struct mark));
+    
+    
+    for(int i=0;i<n;i++){
+        
+        printf("Enter marks for student no. %d : ",i);
+        scanf("%d",&(*ptr));
+        sum=*ptr+sum;
+        ptr++;
+    }
+    float result=sum/n;
+    printf("Average marks for student is : %.2f",result);
+
+    return 0;
+}
