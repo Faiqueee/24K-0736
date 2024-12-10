@@ -1,0 +1,56 @@
+#include <stdio.h>
+
+struct employee{
+  int Ecode;
+  char Ename[30];
+  int doj;
+};
+
+void tenure(int d,struct employee e[4],int count){
+    int sub;
+    printf("----EMPLOYEES HAVING TENSURE GREATER THAN 3 YEARS----\n");
+    for(int i=0;i<4;i++){
+            sub=d%100-e[i].doj%100;
+            if(sub>3){
+                printf("Code for employee no. %d : %d\n",i,e[i].Ecode);
+
+                printf("Code for employee no. %d : %s\n",i,e[i].Ename);
+    
+                printf("Code for employee no. %d : %d\n",i,e[i].doj);
+                
+    count++;
+            
+        }
+    }
+        printf("\nCount of employees having tenure greater than 3 : %d",count);
+    return;
+    
+}
+
+int main() {
+
+struct employee emp[4];
+
+for (int i=0;i<4;i++){
+    
+    printf("Enter code for employee no. %d : ",i);
+    scanf("%d",&emp[i].Ecode);
+    
+    printf("Enter name for employee no. %d : ",i);
+    getchar();
+    scanf("%[^\n]s",emp[i].Ename);
+    
+    printf("Enter date of joining for employee no. %d : ",i);
+    scanf("%d",&emp[i].doj);
+    
+}
+
+int currentd;
+printf("Enter current date [ddmmyy] : ");
+scanf("%d",&currentd);
+
+tenure(currentd,emp,0);
+
+    return 0;
+}
+//https://www.programiz.com/online-compiler/7YuoZ0ehUtbQj

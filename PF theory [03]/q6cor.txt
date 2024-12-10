@@ -1,0 +1,167 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct weather {
+    float temp;
+    float rain;
+    float wind;
+};
+
+struct crop {
+    char type[50];
+    char stage[20];
+    float yield;
+    struct weather *forecast;
+};
+
+struct equipment {
+    char name[50];
+    char status[20];
+    float fuel;
+    char plan[100];
+};
+
+struct sensor {
+    float nutrients;
+    float pH;
+    int pests;
+};
+
+struct field {
+    float lat;
+    float lon;
+    float health;
+    float moisture;
+    struct crop *crops;
+    int cropCount;
+    struct equipment *equipments;
+    int equipCount;
+    struct sensor *sensors;
+    int sensorCount;
+};
+
+struct hub {
+    struct field *fields;
+    int fieldCount;
+    float yield;
+    char resources[100];
+    char emergency[100];
+};
+
+struct weather *makeweather(float temp, float rain, float wind) {
+    struct weather *w = malloc(sizeof(struct weather));
+    w->temp = temp;
+    w->rain = rain;
+    w->wind = wind;
+    return w;
+}
+
+struct crop *makecrops(int count) {
+    struct crop *c = malloc(count * sizeof(struct crop));
+    for (int i = 0; i < count; i++) {
+        printf("Crop %d type: ", i + 1);
+        scanf("%s", c[i].type);
+        printf("Stage: ");
+        scanf("%s", c[i].stage);
+        printf("Yield: ");
+        scanf("%f", &c[i].yield);
+        c[i].forecast = makeweather(25 + i, 10 + i, 5 + i);
+    }
+    return c;
+}
+
+struct equipment *makeequipments(int count) {
+    struct equipment *e = malloc(count * sizeof(struct equipment));
+    for (int i = 0; i < count; i++) {
+        printf("Equipment %d name: ", i + 1);
+        scanf("%s", e[i].name);
+        printf("Status: ");
+        scanf("%s", e[i].status);
+        printf("Fuel: ");
+        scanf("%f", &e[i].fuel);
+        printf("Plan: ");
+        scanf("%s", e[i].plan);
+    }
+    return e;
+}
+
+struct sensor *makesensors(int count) {
+    struct sensor *s = malloc(count * sizeof(struct sensor));
+    for (int i = 0; i < count; i++) {
+        printf("Sensor %d nutrients: ", i + 1);
+        scanf("%f", &s[i].nutrients);
+        printf("pH: ");
+        scanf("%f", &s[i].pH);
+        printf("Pests (0/1): ");
+        scanf("%d", &s[i].pests);
+    }
+    return s;
+}
+
+struct field *makefields(int count) {
+    struct field *f = malloc(count * sizeof(struct field));
+    for (int i = 0; i < count; i++) {
+        printf("Field %d latitude: ", i + 1);
+        scanf("%f", &f[i].lat);
+        printf("Longitude: ");
+        scanf("%f", &f[i].lon);
+        printf("Health: ");
+        scanf("%f", &f[i].health);
+        printf("Moisture: ");
+        scanf("%f", &f[i].moisture);
+
+        printf("Number of crops: ");
+        scanf("%d", &f[i].cropCount);
+        f[i].crops = makecrops(f[i].cropCount);
+
+        printf("Number of equipments: ");
+        scanf("%d", &f[i].equipCount);
+        f[i].equipments = makeequipments(f[i].equipCount);
+
+        printf("Number of sensors: ");
+        scanf("%d", &f[i].sensorCount);
+        f[i].sensors = makesensors(f[i].sensorCount);
+    }
+    return f;
+}
+
+struct hub *makehubs(int count) {
+    struct hub *h = malloc(count * sizeof(struct hub));
+    for (int i = 0; i < count; i++) {
+        printf("Hub %d number of fields: ", i + 1);
+        scanf("%d", &h[i].fieldCount);
+        h[i].fields = makefields(h[i].fieldCount);
+
+        printf("Yield: ");
+        scanf("%f", &h[i].yield);
+        printf("Resources: ");
+        scanf("%s", h[i].resources);
+        printf("Emergency: ");
+        scanf("%s", h[i].emergency);
+    }
+    return h;
+}
+
+int main() {
+    int hubCount;
+    printf("Number of hubs: ");
+    scanf("%d", &hubCount);
+
+    struct hub *hubs = makehubs(hubCount);
+
+    for (int i = 0; i < hubCount; i++) {
+        for (int j = 0; j < hubs[i].fieldCount; j++) {
+            for (int k = 0; k < hubs[i].fields[j].cropCount; k++) {
+                free(hubs[i].fields[j].crops[k].forecast);
+            }
+            free(hubs[i].fields[j].crops);
+            free(hubs[i].fields[j].equipments);
+            free(hubs[i].fields[j].sensors);
+        }
+        free(hubs[i].fields);
+    }
+    free(hubs);
+
+    return 0;
+}

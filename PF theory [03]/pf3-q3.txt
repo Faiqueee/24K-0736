@@ -1,0 +1,56 @@
+#include <stdio.h>
+#include<stdlib.h>
+
+void validateEmail(char* email);
+
+int main() {
+    
+    int n;
+    printf("Enter size of mail : ");
+    scanf("%d",&n);
+    
+    char* email= (char*) calloc(n,sizeof(char));
+    //email=NULL;
+    printf("Enter mail : ");
+    getchar();
+    scanf("%[^\n]s",email);
+
+    validateEmail(email);
+/*   if(1){
+       printf("Email is valid.");
+   }
+   else if(0){
+       printf("Email is invalid");
+   }*/
+    free(email);
+    return 0;
+}
+
+void validateEmail(char* email){
+ /*if(email==NULL){
+     printf("Email is invalid");
+     return 0;
+ }*/
+    int count=0;
+    int check=0;
+    int index=0;
+    for(int i=0;email[i]!='\0';i++){
+        if(email[i]=='@'){
+            index=i;
+            count++;
+        }
+    }
+    for(int i=index;email[i]!='\0';i++){
+        if(email[i]=='.'){
+            check++;
+        }
+    }
+    if(check>=1 && count==1 && index>=0){
+        printf("email is valid");
+       return ;
+    }
+    else{
+        printf("email is invalid");
+        return ;
+    }
+}

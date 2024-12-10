@@ -1,0 +1,107 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+struct contentMetadata {
+    char *title;
+    float rating;
+    int runtime;
+    char *encodingFormats;
+};
+
+void inputEngagementMatrix(int **engagementMatrix, int numUsers, int numCategories) {
+    for (int userIndex = 0; userIndex < numUsers; userIndex++) {
+        for (int categoryIndex = 0; categoryIndex < numCategories; categoryIndex++) {
+            int engagementScore;
+            printf("Enter engagement score for User %d in Category %d: ", userIndex + 1, categoryIndex + 1);
+            scanf("%d", &engagementScore);
+            engagementMatrix[userIndex][categoryIndex] = engagementScore;
+        }
+    }
+}
+
+void inputDeviceMatrix(int **deviceMatrix, int numUsers, int numDevices) {
+    for (int userIndex = 0; userIndex < numUsers; userIndex++) {
+        for (int deviceIndex = 0; deviceIndex < numDevices; deviceIndex++) {
+            int resolutionPreference;
+            printf("Enter resolution preference for User %d on Device %d: ", userIndex + 1, deviceIndex + 1);
+            scanf("%d", &resolutionPreference);
+            deviceMatrix[userIndex][deviceIndex] = resolutionPreference;
+        }
+    }
+}
+
+void inputContentMetadata(struct contentMetadata **contentMetadataMatrix, int numCategories, int numContents) {
+    for (int categoryIndex = 0; categoryIndex < numCategories; categoryIndex++) {
+        for (int contentIndex = 0; contentIndex < numContents; contentIndex++) {
+            contentMetadataMatrix[categoryIndex][contentIndex].title = (char *)malloc(100 * sizeof(char));
+            printf("Enter title for Category %d, Content %d: ", categoryIndex + 1, contentIndex + 1);
+            scanf("%s", contentMetadataMatrix[categoryIndex][contentIndex].title);
+
+            printf("Enter rating for Content %d: ", contentIndex + 1);
+            scanf("%f", &contentMetadataMatrix[categoryIndex][contentIndex].rating);
+
+            printf("Enter runtime for Content %d: ", contentIndex + 1);
+            scanf("%d", &contentMetadataMatrix[categoryIndex][contentIndex].runtime);
+
+            contentMetadataMatrix[categoryIndex][contentIndex].encodingFormats = (char *)malloc(50 * sizeof(char));
+            printf("Enter encoding formats for Content %d: ", contentIndex + 1);
+            scanf("%s", contentMetadataMatrix[categoryIndex][contentIndex].encodingFormats);
+        }
+    }
+}
+
+int main() {
+    int numUsers, numCategories, numDevices, numContents;
+
+    printf("Number of Users: ");
+    scanf("%d", &numUsers);
+
+    printf("Number of Content Categories: ");
+    scanf("%d", &numCategories);
+
+    printf("Number of Devices per User: ");
+    scanf("%d", &numDevices);
+
+    printf("Number of Contents per Category: ");
+    scanf("%d", &numContents);
+
+    int **engagementMatrix = malloc(numUsers * sizeof(int *));
+    for (int userIndex = 0; userIndex < numUsers; userIndex++) {
+        engagementMatrix[userIndex] = malloc(numCategories * sizeof(int));
+    }
+
+    int **deviceMatrix = malloc(numUsers * sizeof(int *));
+    for (int userIndex = 0; userIndex < numUsers; userIndex++) {
+        deviceMatrix[userIndex] = malloc(numDevices * sizeof(int));
+    }
+
+    struct contentMetadata **contentMetadataMatrix = malloc(numCategories * sizeof(struct contentMetadata *));
+    for (int categoryIndex = 0; categoryIndex < numCategories; categoryIndex++) {
+        contentMetadataMatrix[categoryIndex] = malloc(numContents * sizeof(struct contentMetadata));
+    }
+
+    inputEngagementMatrix(engagementMatrix, numUsers, numCategories);
+    inputDeviceMatrix(deviceMatrix, numUsers, numDevices);
+    inputContentMetadata(contentMetadataMatrix, numCategories, numContents);
+
+    for (int userIndex = 0; userIndex < numUsers; userIndex++) {
+        free(engagementMatrix[userIndex]);
+    }
+    free(engagementMatrix);
+
+    for (int userIndex = 0; userIndex < numUsers; userIndex++) {
+        free(deviceMatrix[userIndex]);
+    }
+    free(deviceMatrix);
+
+    for (int categoryIndex = 0; categoryIndex < numCategories; categoryIndex++) {
+        for (int contentIndex = 0; contentIndex < numContents; contentIndex++) {
+            free(contentMetadataMatrix[categoryIndex][contentIndex].title);
+            free(contentMetadataMatrix[categoryIndex][contentIndex].encodingFormats);
+        }
+        free(contentMetadataMatrix[categoryIndex]);
+    }
+    free(contentMetadataMatrix);
+
+    return 0;
+}

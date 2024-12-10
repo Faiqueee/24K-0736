@@ -1,0 +1,122 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+struct employee {
+    int *ratings;
+    int totalScore;
+};
+
+void inputEmployees(int **ratings, int numEmployees, int numPeriods) {
+    for (int i = 0; i < numEmployees; i++) {
+        printf("Enter ratings for Employee %d:\n", i + 1);
+        for (int j = 0; j < numPeriods; j++) {
+            int score;
+            do {
+                printf("Period %d: ", j + 1);
+                scanf("%d", &score);
+                if (score < 1 || score > 10)
+                    printf("Rating must be between 1 and 10.\n");
+            } while (score < 1 || score > 10);
+            ratings[i][j] = score;
+        }
+    }
+}
+
+void displayPerformance(int **ratings, int numEmployees, int numPeriods) {
+    for (int i = 0; i < numEmployees; i++) {
+        printf("Employee %d Ratings: ", i + 1);
+        for (int j = 0; j < numPeriods; j++) {
+            printf("%d ", ratings[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+int findEmployeeOfTheYear(int **ratings, int numEmployees, int numPeriods) {
+    int bestIndex = 0;
+    float highestAvg = 0;
+
+    for (int i = 0; i < numEmployees; i++) {
+        int total = 0;
+        for (int j = 0; j < numPeriods; j++) {
+            total = total + ratings[i][j];
+        }
+        float avg = (float)total / numPeriods;
+        if (avg > highestAvg) {
+            highestAvg = avg;
+            bestIndex = i;
+        }
+    }
+    return bestIndex;
+}
+
+int findHighestRatedPeriod(int **ratings, int numEmployees, int numPeriods) {
+    int bestPeriod = 0;
+    float highestAvg = 0;
+
+    for (int j = 0; j < numPeriods; j++) {
+        int total = 0;
+        for (int i = 0; i < numEmployees; i++) {
+            total = total + ratings[i][j];
+        }
+        float avg = (float)total / numEmployees;
+        if (avg > highestAvg) {
+            highestAvg = avg;
+            bestPeriod = j;
+        }
+    }
+    return bestPeriod;
+}
+
+int findWorstPerformingEmployee(int **ratings, int numEmployees, int numPeriods) {
+    int worstIndex = 0;
+    float lowestAvg = 11;
+
+    for (int i = 0; i < numEmployees; i++) {
+        int total = 0;
+        for (int j = 0; j < numPeriods; j++) {
+            total = total + ratings[i][j];
+        }
+        float avg = (float)total / numPeriods;
+        if (avg < lowestAvg) {
+            lowestAvg = avg;
+            worstIndex = i;
+        }
+    }
+    return worstIndex;
+}
+
+int main() {
+    int numEmployees, numPeriods;
+
+    printf("Number of Employees: ");
+    scanf("%d", &numEmployees);
+
+    printf("Number of Evaluation Periods: ");
+    scanf("%d", &numPeriods);
+
+    int **ratings = malloc(numEmployees * sizeof(int *));
+    for (int i = 0; i < numEmployees; i++) {
+        ratings[i] = malloc(numPeriods * sizeof(int));
+    }
+
+    inputEmployees(ratings, numEmployees, numPeriods);
+
+    displayPerformance(ratings, numEmployees, numPeriods);
+
+    int bestEmployee = findEmployeeOfTheYear(ratings, numEmployees, numPeriods);
+    printf("Employee of the Year: Employee %d\n", bestEmployee + 1);
+
+    int bestPeriod = findHighestRatedPeriod(ratings, numEmployees, numPeriods);
+    printf("Highest Rated Period: Period %d\n", bestPeriod + 1);
+
+    int worstEmployee = findWorstPerformingEmployee(ratings, numEmployees, numPeriods);
+    printf("Worst Performing Employee: Employee %d\n", worstEmployee + 1);
+
+    for (int i = 0; i < numEmployees; i++) {
+        free(ratings[i]);
+    }
+    free(ratings);
+
+    return 0;
+}

@@ -1,0 +1,71 @@
+#include <stdio.h>
+#include <string.h>
+
+struct player {
+    int ballS[12];
+    char name[20];
+    int totalS;
+} p1, p2;
+
+void validatescore(int score) {
+    if (score > 6 || score < 0) {
+        printf("Invalid score. Score disregarded.\n");
+    }
+}
+
+void playgame(struct player *p, int x) {
+    int i;
+    p->totalS = 0;
+    printf("Enter name for player %d: ", x);
+    scanf("%s", p->name);
+    for (i = 0; i < 12; i++) {
+        printf("Enter score for ball %d for player %s: ", i + 1, p->name);
+        scanf("%d", &p->ballS[i]);
+        validatescore(p->ballS[i]);
+        if (p->ballS[i] >= 0 && p->ballS[i] <= 6) {
+            p->totalS = p->totalS + p->ballS[i];
+        } else {
+            p->ballS[i] = 0;
+        }
+    }
+}
+
+void findwinner(struct player p1, struct player p2) {
+    if (p1.totalS > p2.totalS) {
+        printf("\nWinner is %s with a total score of %d\n", p1.name, p1.totalS);
+    } else if (p1.totalS < p2.totalS) {
+        printf("\nWinner is %s with a total score of %d\n", p2.name, p2.totalS);
+    } else {
+        printf("\nIt's a tie! Both players scored %d\n", p1.totalS);
+    }
+}
+
+void display(struct player p1, struct player p2) {
+    int i;
+    printf("\nMatch Scoreboard\n");
+    printf("Player 1: %s\n", p1.name);
+    printf("Ball scores: ");
+    for (i = 0; i < 12; i++) {
+        printf("%d ", p1.ballS[i]);
+    }
+    printf("\nTotal score: %d\n", p1.totalS);
+
+    printf("\nPlayer 2: %s\n", p2.name);
+    printf("Ball scores: ");
+    for (i = 0; i < 12; i++) {
+        printf("%d ", p2.ballS[i]);
+    }
+    printf("\nTotal score: %d\n", p2.totalS);
+}
+
+int main() {
+    printf("\t\t\t\tCricket Showdown\n");
+
+    playgame(&p1, 1);
+    playgame(&p2, 2);
+
+    display(p1, p2);
+    findwinner(p1, p2);
+
+    return 0;
+}
