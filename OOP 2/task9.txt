@@ -1,0 +1,38 @@
+#include <iostream>
+
+using namespace std;
+
+struct invent{
+    int id;
+    int quantity;
+    float price;
+};
+
+int main() {
+
+int n;
+cout<<"Enter number of products : ";
+cin>>n;
+
+struct invent* in= new struct invent[n];
+
+for(int i=0;i<n;i++){
+    cout<<"Enter ID of product no."<<i+1<< ": ";
+    cin>>in[i].id;
+    cout<<"Enter quantity of product no."<<i+1<< ": ";
+    cin>>in[i].quantity;
+    cout<<"Enter price of product no."<<i+1<< ": ";
+    cin>>in[i].price;
+    
+}
+cout<<"---------------------\n";
+for(int i=0;i<n;i++){
+    cout<<"Total value of product no. "<<i+1<< ": "<<in[i].quantity*in[i].price<<endl;
+    
+}
+
+    delete[] in;
+
+
+    return 0;
+}

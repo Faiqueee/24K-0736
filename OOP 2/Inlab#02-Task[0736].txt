@@ -1,0 +1,77 @@
+#include <iostream>
+using namespace std;
+int ** del(int rows,int cols,int **ptr){
+    for(int i=0;i<rows;i++){
+       
+        delete[] ptr[i];
+    }
+    delete[]  ptr;
+ptr=nullptr;
+return ptr;
+    
+}
+
+void input(int rows,int cols,int **ptr){
+int i;
+int j;
+for(i=0;i<rows;i++){
+ for(j=0;j<cols;j++){
+  cout<<"Enter element no.  "<<i+1<<" "<<j+1<<" : ";
+
+  cin>>ptr[i][j];
+
+ }
+}
+return;
+}
+
+void display(int rows,int cols,int **ptr){
+int i;
+int j;
+for(i=0;i<rows;i++){
+ for(j=0;j<cols;j++){
+  cout<<"Enter element no.  "<<i+1<<" "<<j+1<<" : "<<ptr[i][j]<<endl;
+
+ }
+}
+return;
+}
+
+
+int **allocate(int rows,int cols){
+
+int **ptr= new int*[rows];
+int i;
+for(i=0;i<rows;i++){
+    ptr[i]= new  int[cols];
+
+}	
+	return ptr;
+}
+
+
+int main(){
+    
+int rows;
+int  cols;
+int i;
+
+cout<<"Enter rows amd cols :  ";
+
+cin >> rows >> cols;
+
+int **ptr=allocate(rows,cols);
+input(rows,cols,ptr);
+display(rows,cols,ptr);
+ptr=del(rows,cols,ptr);
+
+    if(ptr==nullptr){
+        cout<<"\t\t\n\nMemory deallocated successfully!"<<endl;
+    }
+    else     cout<<"\t\t\n\nMemory deallocation failed!!"<<endl;
+    
+    
+    
+    return 0;
+
+}

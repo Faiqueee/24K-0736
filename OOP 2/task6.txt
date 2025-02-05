@@ -1,0 +1,54 @@
+#include <iostream>
+
+using namespace std;
+
+struct student{
+    string name;
+    int rollno;
+    float marks[3];
+};
+
+int main() {
+
+int n;
+cout<<"Enter number of students : ";
+cin>>n;
+
+float sum[3];
+int summ=0;
+struct student* emp= new struct student[n];
+
+for(int i=0;i<n;i++){
+    cout<<"Enter name of student no."<<i+1<< " : ";
+    cin>>emp[i].name;
+    cout<<"Enter roll number of student no."<<i+1<< " : ";
+    cin>>emp[i].rollno;
+    
+    for(int j=0;j<3;j++){
+    cout<<"Enter marks no. "<<i+1<<" of subject no."<<j+1<< " : ";
+    cin>>emp[i].marks[j];
+    summ=summ+emp[i].marks[j];
+    }
+    sum[i]=summ;
+    summ=0;
+}
+for(int i=0;i<n;i++){
+    cout<<"\nName of student no."<<i+1<< ": "<<emp[i].name<<endl;
+    cout<<"Roll no of student no. "<<i+1<< ": "<<emp[i].rollno<<endl;
+    for(int j=0;j<3;j++){
+    
+    cout<<"Marks of subject no,"<<j+1<<" of student no. "<<i+1<< ": "<<emp[i].marks[j]<<endl;
+}
+    
+}
+cout<<"\n\n\n";
+for(int i=0;i<n;i++){
+    
+    cout<<"Average marks of student no."<<i+1<<" : "<<sum[i]/3<<endl;
+}
+    
+    delete[] emp;
+
+
+    return 0;
+}

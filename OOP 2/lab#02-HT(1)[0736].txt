@@ -1,0 +1,65 @@
+#include <iostream>
+using namespace std;
+
+struct book{
+
+string title;
+string author;
+int year;
+    
+};
+/*
+void input(struct book *b,int n){
+    
+    for(int i=0;i<n;i++){
+        cout<<"Enter title of book no. "<<i+1<<" : ";
+        cin>>b[i].title;
+        
+        cout<<"Enter author of book no. "<<i+1<<" : ";
+        cin>>b[i].author;
+        
+        cout<<"Enter year of book no. "<<i+1<<" : ";
+        cin>>b[i].year;
+    }
+    return;
+}*/
+void input(struct book *b, int n) {
+    cin.ignore(); 
+    for (int i = 0; i < n; i++) {
+        cout << "Enter title of book no. " << i + 1 << " : ";
+        getline(cin, b[i].title);
+        
+        cout << "Enter author of book no. " << i + 1 << " : ";
+        getline(cin, b[i].author);
+        
+        cout << "Enter year of book no. " << i + 1 << " : ";
+        cin >> b[i].year;
+        cin.ignore();  
+        
+    }
+}
+void display(struct book *b,int n){
+    for(int i=0;i<n;i++){
+        cout<<"Title of book no. "<<i+1<<" : "<<b[i].title<<endl;
+        cout<<"Author of book no. "<<i+1<<" : "<<b[i].author<<endl;
+        cout<<"Publication year of book no. "<<i+1<<" : "<<b[i].year<<endl;
+    }
+    return;
+}
+int main() {
+
+int n;
+cout<<"Enter number of books : ";
+cin>>n;
+
+struct book *b= new struct book[n];
+
+input(b,n);
+display(b,n);
+
+delete[] b;
+
+
+
+    return 0;
+}
