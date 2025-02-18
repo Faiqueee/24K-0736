@@ -60,9 +60,9 @@ car(){
     fuelcap=0;
     currentfuel=0;
 
-}//check pri/pub??
+}
 
-};
+};//end
 
 
 int main() {
