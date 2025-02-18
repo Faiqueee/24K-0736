@@ -27,7 +27,7 @@ class fitnesstracker{
       cout<<"Name : "<<username<<endl<<"You walked : "<<steptaken<<" steps"<<endl<<"Your goal was : "<<dailystepgoal<<endl<<"You burned : "<<caloriesburned<<" calories"<<endl;
   }
   
-};
+};//end
 int main() {
 fitnesstracker f1;
 f1.method("Faique",323);
