@@ -17,7 +17,7 @@ wallet(){
     void spendmoney();
     void displaytransaction();
     
-};
+};//end
 void wallet :: addmoney(float b){
    
     balance+=b;
