@@ -23,7 +23,7 @@ class musicplayer{
       count=0;
   }
  
-};
+};//end
 
 void musicplayer :: addmusic(){
     string a;
