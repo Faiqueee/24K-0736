@@ -1,0 +1,55 @@
+#include <iostream>
+using namespace std;
+
+class matrix2x2{
+  
+  int a,b,c,d;
+  public:
+  
+  matrix2x2 operator+(const matrix2x2 &m){
+      matrix2x2 temp;
+      temp.a=a+m.a;
+      temp.b=b+m.b;
+      temp.c=c+m.c;
+      temp.d=d+m.d;
+      return temp;
+  }
+  
+  matrix2x2 operator-(const matrix2x2 &m){
+      matrix2x2 temp;
+      temp.a=a-m.a;
+      temp.b=b-m.b;
+      temp.c=c-m.c;
+      temp.d=d-m.d;
+      return temp;
+      
+  }
+  matrix2x2 operator*(const matrix2x2 &m){
+      matrix2x2 temp;
+      temp.a=a*m.a;
+      temp.b=b*m.b;
+      temp.c=c*m.c;
+      temp.d=d*m.d;
+      return temp;
+  
+      //change to proper multiplication
+  }
+
+friend ostream& operator<<(ostream& COUT, const matrix2x2 &m);
+friend void determinant(matrix2x2 m);
+
+};
+
+ostream& operator<<(ostream& COUT, const matrix2x2 &m){
+    COUT<<"Matrix : "<<"|"<<m.a<<"|"<<"|"<<m.b<<"|\n"<<"|"<<m.c<<"|"<<"|"<<m.d<<"|"<<endl;
+    return COUT;
+}
+  
+void determinant(matrix2x2 m){
+cout<<"Determinant of matrix : "<<m.a*m.d-m.b*m.c<<endl;    
+}
+
+
+int main() {
+    return 0;
+}

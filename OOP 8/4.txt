@@ -1,0 +1,65 @@
+#include <iostream>
+using namespace std;
+
+class inventorymanager;
+
+class car{
+
+private:
+
+double price;
+string name;
+
+public:
+
+car(double price=0.0, string name="X"){
+
+this->price=price;
+this->name=name;
+
+}
+friend class inventorymanager;
+
+/*friend void comparePrice(const car &c1,const car &c2);
+*/
+friend void comparePrice(const car &c1,const car &c2);
+
+    
+};
+void comparePrice(const car &c1,const car &c2){
+
+if(c1.price>c2.price)    cout<<c1.name<<" is more expensive than "<<c2.name<<endl;
+else if(c1.price==c2.price)    cout<<c1.name<<" is equally expensive as "<<c2.name<<endl;
+else     cout<<c2.name<<" is more expensive than "<<c1.name<<endl;
+    
+}
+
+
+class inventorymanager{
+  
+  public:
+  
+  void update(car &c1){
+      cout<<"Re-enter price of car : ";
+      cin>>c1.price;
+      cout<<"Re-enter name of car : ";
+      cin>>c1.name;
+  }
+  void display(car c1){
+      cout<<"Price of car : "<<c1.price<<endl;
+      cout<<"Name of car : "<<c1.name<<endl;
+      
+  }
+    
+};
+
+int main() {
+ car c1(110.12,"Honda civic"),c2(110.12,"P.911");
+ comparePrice(c1,c2);
+ inventorymanager i1;
+ i1.display(c2);
+ i1.update(c2);
+ i1.display(c2);
+comparePrice(c1,c2);
+    return 0;
+}

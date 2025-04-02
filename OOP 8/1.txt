@@ -1,0 +1,75 @@
+#include <iostream>
+using namespace std;
+
+class complex{
+  
+  private:
+  
+  int real;
+  int imag;
+  
+  public:
+  complex(){
+      real=0;
+      imag=0;
+  }
+  
+  complex(int real,int imag){
+  this->real=real;
+  this->imag=imag;
+      
+  }
+  
+  complex operator+(complex &c){
+      complex temp;
+      temp.real=real+c.real;
+      temp.imag=imag+c.imag;
+      return temp;
+      
+  }
+  complex operator-(complex &c){
+      complex temp;
+      temp.real=real-c.real;
+      temp.imag=imag-c.imag;
+      return temp;
+      
+  }
+  complex operator*(complex &c){
+      complex temp;
+      temp.real=real*c.real;
+      temp.imag=imag*c.imag;
+      return temp;
+      
+  }
+  complex operator/(complex &c){
+      complex temp;
+      temp.real=real/c.real;
+      temp.imag=imag/c.imag;
+      return temp;
+      
+  }
+    
+   friend ostream& operator<<(ostream &COUT,complex &c){
+if(c.imag>=0)      COUT<<c.real<<"+"<<c.imag<<"i";
+else       COUT<<c.real<<c.imag<<"i";
+
+      return COUT;
+  }
+   /*void display(){
+       cout<<"Real number : "<<real<<endl;
+       cout<<"Imaginary number : "<<imag<<endl;
+       
+   } 
+   */
+   
+};
+
+int main() {
+
+complex c1(2,3),c2(6,7);
+complex c3;
+c3=c1-c2;
+cout<<c3<<" || "<<c1;
+
+    return 0;
+}

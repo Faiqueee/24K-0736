@@ -1,0 +1,76 @@
+#include <iostream>
+using namespace std;
+class manager;
+class account{
+  
+  int AccountNumber;
+  float balance;
+  
+  public:
+  
+  account(){
+      cout<<"Enter account number : ";
+      cin>>AccountNumber;
+      cout<<"Enter balance : ";
+      cin>>balance;
+      
+  }
+  
+friend class manager;
+
+};
+
+class manager{
+  
+public:
+
+void deposit(account &a1){
+    float dep;
+    cout<<"Enter amount to be deposited : ";
+    cin>>dep;
+    a1.balance+=dep;
+    
+}
+
+void withdraw(account &a1){
+    float wit;
+    cout<<"Enter amount to be withdrawn : ";
+    cin>>wit;
+    if(a1.balance>=wit) a1.balance-=wit;
+    
+}
+
+void display(const account &a1){
+      cout<<"Account number : "<<a1.AccountNumber<<endl;
+      cout<<"Balance : "<<a1.balance<<endl;
+    
+}
+  
+friend void update(account &a1){
+      cout<<"Re-enter account number : ";
+      cin>>a1.AccountNumber;
+      cout<<"Re-enter balance : ";
+      cin>>a1.balance;
+      
+}
+  
+friend void transferfunds(account &a1,account &a2){
+
+float a;
+cout<<"Enter amount to be tranferred from account "<<a1.AccountNumber<<" : ";
+cin>>a;
+
+if(a1.balance>=a) {
+    
+    a1.balance-a;
+    a2.balance+=a;    
+}
+}
+
+};
+
+
+int main() {
+    
+    return 0;
+}

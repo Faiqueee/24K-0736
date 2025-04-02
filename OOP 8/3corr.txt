@@ -1,0 +1,65 @@
+#include <iostream>
+using namespace std;
+
+class vector2D{
+    
+    int x,y;
+    
+    public:
+    vector2D(int x=0,int y=0){
+        this->x=x;
+        this->y=y;
+        
+    }
+    vector2D operator+(const vector2D &v) const{
+        /*vector2D temp;
+        temp.x=x+v.x;
+        temp.y=x+v.y;
+        */
+        return vector2D(x+v.x,y+v.y);
+    }
+    vector2D operator-(const vector2D &v){
+        vector2D temp;
+        temp.x=x-v.x;
+        temp.y=y-v.y;
+        
+        return temp;
+    }
+    vector2D operator*(int n){
+        vector2D temp;
+        temp.x=n*x;
+        temp.y=n*y;
+        return temp;
+        /*v.x=n*v.x;
+        v.y=n*v.y;
+        return *this;
+        */
+    }
+    
+    friend vector2D operator*(const vector2D &v1,const vector2D &v2){
+        vector2D temp;
+        temp.x=v1.x*v2.x;
+        temp.y=v1.y*v2.y;
+        
+        return temp;
+    }
+    friend ostream& operator<<(ostream &COUT,const vector2D &v1){// gives error if v1 not constant why?
+        COUT<<"Vector :  "<<v1.x<<"i "<<v1.y<<"j ."<<endl;
+        COUT<<"Vector :  ("<<v1.x<<", "<<v1.y<<")"<<endl;
+    
+     return COUT;   
+    }
+    
+};
+
+int main() {
+    vector2D v1(1,2),v2(4,5),v3(2,3);
+    cout<<v1+v2;
+    cout<<v1-v2;
+    cout<<v1*3;
+    cout<<(v1*v2);
+    
+    
+
+    return 0;
+}
