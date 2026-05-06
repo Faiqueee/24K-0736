@@ -1,0 +1,607 @@
+/ =============================================================================
+// SECTION 1: UNNAMED PIPE (fork + pipe between parent and child)
+// =============================================================================
+ 
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+ 
+int main() {
+    int fd[2];
+    char write_msg[] = "Greetings";
+    char read_msg[25];
+    pid_t pid;
+ 
+    pipe(fd);
+    pid = fork();
+ 
+    if (pid > 0) {          // PARENT — writer
+        close(fd[0]);
+        write(fd[1], write_msg, strlen(write_msg) + 1);
+        close(fd[1]);
+    } else {                // CHILD — reader
+        close(fd[1]);
+        read(fd[0], read_msg, 25);
+        printf("Read: %s\n", read_msg);
+        close(fd[0]);
+    }
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 2: NAMED PIPE — PRODUCER (run first in terminal 1)
+// =============================================================================
+ 
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <string.h>
+ 
+int main() {
+    char msg[100];
+    unlink("/tmp/myfifo");
+    mkfifo("/tmp/myfifo", 0666);
+    int fd = open("/tmp/myfifo", O_WRONLY);
+ 
+    while (1) {
+        printf("Enter: ");
+        fgets(msg, 100, stdin);
+        write(fd, msg, strlen(msg));
+        if (strncmp(msg, "exit", 4) == 0) break;
+    }
+    close(fd);
+    unlink("/tmp/myfifo");
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 3: NAMED PIPE — CONSUMER (run in terminal 2 after producer)
+// =============================================================================
+ 
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+ 
+int main() {
+    char msg[100];
+    int fd = open("/tmp/myfifo", O_RDONLY);
+    while (read(fd, msg, 100) > 0)
+        printf("Got: %s", msg);
+    close(fd);
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 4: SHARED MEMORY — PRODUCER
+// Compile: gcc -o shmprod shmprod.c -lrt
+// =============================================================================
+ 
+#include <stdio.h>
+#include <string.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
+ 
+int main() {
+    const char *name = "OS";
+    const char *msg  = "Hello World!. Cost :";
+    int cost = 10;
+    int size = 4096;
+ 
+    shm_unlink(name);
+    int fd = shm_open(name, O_CREAT | O_RDWR, 0666);
+    ftruncate(fd, size);
+    char *ptr = (char *)mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    sprintf(ptr, "%s %d", msg, cost);
+ 
+    printf("Producer done. Press Enter to exit...");
+    getchar();
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 5: SHARED MEMORY — CONSUMER
+// Compile: gcc -o shmcon shmcon.c -lrt
+// Run AFTER producer
+// =============================================================================
+ 
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+ 
+int main() {
+    const char *name = "OS";
+    int size = 4096;
+    char str[100];
+    int cost;
+ 
+    int fd  = shm_open(name, O_RDWR, 0666);
+    char *ptr = (char *)mmap(0, size, PROT_READ, MAP_SHARED, fd, 0);
+    sscanf(ptr, "%99[^0-9] %d", str, &cost);
+    printf("Text: %s\nCost: %d\n", str, cost);
+ 
+    shm_unlink(name);
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 6: BASIC THREAD 
+// Compile: gcc -o out file.c -pthread
+// =============================================================================
+ 
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+ 
+void* worker(void* arg) {
+    int val = *(int*)arg;                           
+    printf("[Thread %lu] received: %d\n",
+           (unsigned long)pthread_self(), val);    
+ 
+    // Return a value back to main
+    int *result = malloc(sizeof(int));
+    *result = val * 2;
+    return (void*)result;                           
+}
+ 
+int main() {
+    pthread_t t1, t2;
+    int a = 10, b = 20;
+ 
+    pthread_create(&t1, NULL, worker, &a);          
+    pthread_create(&t2, NULL, worker, &b);         
+ 
+    void *ret1, *ret2;
+    pthread_join(t1, &ret1);                       
+    pthread_join(t2, &ret2);
+ 
+    printf("t1 returned: %d\n", *(int*)ret1);
+    printf("t2 returned: %d\n", *(int*)ret2);
+ 
+    free(ret1);
+    free(ret2);
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 7: MULTIPLE THREADS WITH LOOP — safe arg passing via array
+// Each thread gets its own unique argument (no &i loop bug)
+// =============================================================================
+ 
+#include <stdio.h>
+#include <pthread.h>
+#define NUM_THREADS 5
+ 
+void* print_id(void* arg) {
+    int id = *(int*)arg;
+    printf("Thread %d running. TID: %lu\n", id, (unsigned long)pthread_self());
+    return NULL;
+}
+ 
+int main() {
+    pthread_t threads[NUM_THREADS];
+    int args[NUM_THREADS];              // unique array slot per thread — safe!
+ 
+    for (int i = 0; i < NUM_THREADS; i++) {
+        args[i] = i;
+        pthread_create(&threads[i], NULL, print_id, &args[i]);
+    }
+    for (int i = 0; i < NUM_THREADS; i++)
+        pthread_join(threads[i], NULL);
+ 
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 8: THREAD WITH STRUCT ARG — passing multiple values
+// =============================================================================
+ 
+#include <stdio.h>
+#include <pthread.h>
+ 
+typedef struct {
+    int id;
+    int start;
+    int end;
+} Range;
+ 
+void* sum_range(void* arg) {
+    Range *r = (Range*)arg;             // cast void* → Range*, use arrow operator
+    int total = 0;
+    for (int i = r->start; i <= r->end; i++)
+        total += i;
+    printf("Thread %d: sum[%d..%d] = %d\n", r->id, r->start, r->end, total);
+    return (void*)(long)total;          // return int as void* via long cast
+}
+ 
+int main() {
+    pthread_t t1, t2;
+    Range r1 = {1, 1,  50};
+    Range r2 = {2, 51, 100};
+ 
+    pthread_create(&t1, NULL, sum_range, &r1);
+    pthread_create(&t2, NULL, sum_range, &r2);
+ 
+    void *res1, *res2;
+    pthread_join(t1, &res1);
+    pthread_join(t2, &res2);
+ 
+    long total = (long)res1 + (long)res2;
+    printf("Total sum: %ld\n", total);
+    return 0;
+}
+ 
+ 
+ 
+// =============================================================================
+// SECTION 11: MUTEX — protect shared counter (race condition fix)
+// Functions: pthread_mutex_init, lock, unlock, destroy
+// =============================================================================
+ 
+#include <stdio.h>
+#include <pthread.h>
+#define NUM_THREADS 5
+ 
+int shared_data = 0;
+pthread_mutex_t mutex;
+ 
+void *thread_function(void *arg) {
+    int thread_id = *((int*)arg);
+ 
+    pthread_mutex_lock(&mutex);       
+    shared_data++;
+    printf("Thread %d — shared_data: %d\n", thread_id, shared_data);
+    pthread_mutex_unlock(&mutex);       
+    pthread_exit(NULL);
+}
+ 
+int main() {
+    pthread_t threads[NUM_THREADS];
+    int thread_args[NUM_THREADS];
+ 
+    pthread_mutex_init(&mutex, NULL);  
+ 
+    for (int i = 0; i < NUM_THREADS; i++) {
+        thread_args[i] = i;
+        pthread_create(&threads[i], NULL, thread_function, &thread_args[i]);
+    }
+    for (int i = 0; i < NUM_THREADS; i++)
+        pthread_join(threads[i], NULL);
+ 
+    pthread_mutex_destroy(&mutex);      // cleanup after all threads done
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 12: SEMAPHORE — basic usage as mutex (value=1)
+// Functions: sem_init, sem_wait, sem_post, sem_destroy
+// =============================================================================
+ 
+#include <stdio.h>
+#include <pthread.h>
+#include <semaphore.h>
+ 
+sem_t sem;
+int counter = 0;
+ 
+void *thread_handler(void *ptr) {
+    int x = *((int*)ptr);
+ 
+    printf("Thread %d waiting to enter critical region.\n", x);
+    sem_wait(&sem);                     // decrement: if 0 → block
+ 
+    // Critical region
+    printf("Thread %d entered. Counter = %d\n", x, counter);
+    counter++;
+    printf("Thread %d done.  Counter = %d\n", x, counter);
+ 
+    sem_post(&sem);                     // increment: unblock next waiting thread
+    pthread_exit(0);
+}
+ 
+int main() {
+    int i[2] = {0, 1};
+    pthread_t ta, tb;
+ 
+    sem_init(&sem, 0, 1);               // pshared=0 (local), value=1 (mutex-like)
+ 
+    pthread_create(&ta, 0, (void*)&thread_handler, (void*)&i[0]);
+    pthread_create(&tb, 0, (void*)&thread_handler, (void*)&i[1]);
+ 
+    pthread_join(ta, NULL);
+    pthread_join(tb, NULL);
+ 
+    sem_destroy(&sem);
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 13: SEMAPHORE — value=0 for signaling between threads
+// Thread blocks on sem_wait until another thread calls sem_post
+// =============================================================================
+ 
+#include <stdio.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+ 
+sem_t signal_sem;
+ 
+void *waiter(void *arg) {
+    printf("Waiter: blocking until signal...\n");
+    sem_wait(&signal_sem);             
+    printf("Waiter: got signal, continuing!\n");
+    return NULL;
+}
+ 
+void *signaler(void *arg) {
+    sleep(2);
+    printf("Signaler: posting signal now\n");
+    sem_post(&signal_sem);           
+    return NULL;
+}
+ 
+int main() {
+    pthread_t t1, t2;
+    sem_init(&signal_sem, 0, 0);       
+ 
+    pthread_create(&t1, NULL, waiter,   NULL);
+    pthread_create(&t2, NULL, signaler, NULL);
+ 
+    pthread_join(t1, NULL);
+    pthread_join(t2, NULL);
+ 
+    sem_destroy(&signal_sem);
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 14: PRODUCER-CONSUMER — 3 semaphores, circular buffer
+//
+// mutex → mutual exclusion on buffer (init=1)
+// empty → free slots available   (init=BUFFER_SIZE)
+// full  → items available        (init=0)
+//
+// RULE: always sem_wait(resource) BEFORE sem_wait(mutex) — reversing = deadlock
+// =============================================================================
+ 
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+#define BUFFER_SIZE 5
+ 
+sem_t mutex, empty, full;
+int buffer[BUFFER_SIZE];
+int in = 0, out = 0;
+ 
+void *producer(void *arg) {
+    while (1) {
+        int item = rand() % 100;
+ 
+        sem_wait(&empty);               // wait for a free slot
+        sem_wait(&mutex);               // lock buffer
+ 
+        buffer[in] = item;
+        printf("Produced: %d  (slot %d)\n", item, in);
+        in = (in + 1) % BUFFER_SIZE;
+ 
+        sem_post(&mutex);               // unlock buffer
+        sem_post(&full);                // signal: one more item ready
+ 
+        sleep(rand() % 3);
+    }
+}
+ 
+void *consumer(void *arg) {
+    while (1) {
+        sem_wait(&full);                // wait for an item
+        sem_wait(&mutex);               // lock buffer
+ 
+        int item = buffer[out];
+        printf("Consumed: %d  (slot %d)\n", item, out);
+        out = (out + 1) % BUFFER_SIZE;
+ 
+        sem_post(&mutex);               // unlock buffer
+        sem_post(&empty);               // signal: one more slot free
+ 
+        sleep(rand() % 3);
+    }
+}
+ 
+int main() {
+    pthread_t prod, cons;
+ 
+    sem_init(&mutex, 0, 1);
+    sem_init(&empty, 0, BUFFER_SIZE);   // all slots free at start
+    sem_init(&full,  0, 0);             // no items at start
+ 
+    pthread_create(&prod, NULL, producer, NULL);
+    pthread_create(&cons, NULL, consumer, NULL);
+ 
+    pthread_join(prod, NULL);
+    pthread_join(cons, NULL);
+ 
+    sem_destroy(&mutex);
+    sem_destroy(&empty);
+    sem_destroy(&full);
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 15: READERS-WRITERS
+//
+// mutex    → protects readers_count variable        (init=1)
+// rw_mutex → exclusive writer access                (init=1)
+//
+// First reader  → locks rw_mutex (blocks writers)
+// Last  reader  → unlocks rw_mutex (lets writers in)
+// Writers       → just lock/unlock rw_mutex directly
+// =============================================================================
+ 
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+#define NUM_READERS 3
+#define NUM_WRITERS 2
+ 
+sem_t mutex, rw_mutex;
+int readers_count = 0;
+int shared_value   = 0;            // the "file" / shared resource
+ 
+void *reader(void *arg) {
+    int id = (int)(long)arg;
+    while (1) {
+        sem_wait(&mutex);
+        readers_count++;
+        if (readers_count == 1)     // first reader blocks writers
+            sem_wait(&rw_mutex);
+        sem_post(&mutex);
+ 
+        // READ — multiple readers can be here at the same time
+        printf("Reader %d reads: %d\n", id, shared_value);
+ 
+        sem_wait(&mutex);
+        readers_count--;
+        if (readers_count == 0)     // last reader lets writers in
+            sem_post(&rw_mutex);
+        sem_post(&mutex);
+ 
+        sleep(1);
+    }
+}
+ 
+void *writer(void *arg) {
+    int id = (int)(long)arg;
+    while (1) {
+        sem_wait(&rw_mutex);        // exclusive access — no readers or writers
+ 
+        shared_value++;
+        printf("Writer %d wrote: %d\n", id, shared_value);
+ 
+        sem_post(&rw_mutex);
+        sleep(2);
+    }
+}
+ 
+int main() {
+    pthread_t r[NUM_READERS], w[NUM_WRITERS];
+ 
+    sem_init(&mutex,    0, 1);
+    sem_init(&rw_mutex, 0, 1);
+ 
+    for (int i = 0; i < NUM_WRITERS; i++)
+        pthread_create(&w[i], NULL, writer, (void*)(long)i);
+    for (int i = 0; i < NUM_READERS; i++)
+        pthread_create(&r[i], NULL, reader, (void*)(long)i);
+ 
+    for (int i = 0; i < NUM_READERS; i++) pthread_join(r[i], NULL);
+    for (int i = 0; i < NUM_WRITERS; i++) pthread_join(w[i], NULL);
+ 
+    sem_destroy(&mutex);
+    sem_destroy(&rw_mutex);
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 16: SLEEPING BARBER
+//
+// waitingRoom  → limits customers in waiting room    (init = numChairs)
+// barberChair  → mutual exclusion on chair           (init = 1)
+// barberPillow → barber sleeps here, customer wakes  (init = 0)
+// seatBelt     → customer waits for cut to finish    (init = 0)
+// =============================================================================
+ 
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <semaphore.h>
+#define MAX_CUSTOMERS 25
+ 
+void *customer(void *num);
+void *barber(void *);
+ 
+sem_t waitingRoom, barberChair, barberPillow, seatBelt;
+int allDone = 0;
+ 
+int main() {
+    pthread_t btid;
+    pthread_t tid[MAX_CUSTOMERS];
+    int numCustomers, numChairs, x;
+    int Number[MAX_CUSTOMERS];
+ 
+    printf("Enter number of customers and chairs (max 25): ");
+    scanf("%d %d", &numCustomers, &numChairs);
+    if (numCustomers > MAX_CUSTOMERS) { printf("Too many.\n"); return 0; }
+ 
+    for (int i = 0; i < MAX_CUSTOMERS; i++) Number[i] = i;
+ 
+    sem_init(&waitingRoom,  0, numChairs);  // N chairs available
+    sem_init(&barberChair,  0, 1);          // 1 chair, mutex-like
+    sem_init(&barberPillow, 0, 0);          // barber sleeps until posted
+    sem_init(&seatBelt,     0, 0);          // customer waits until posted
+ 
+    pthread_create(&btid, NULL, barber, NULL);
+    for (int i = 0; i < numCustomers; i++)
+        pthread_create(&tid[i], NULL, customer, (void*)&Number[i]);
+ 
+    for (int i = 0; i < numCustomers; i++) pthread_join(tid[i], NULL);
+ 
+    allDone = 1;
+    sem_post(&barberPillow);                // wake barber so he can exit
+    pthread_join(btid, NULL);
+    return 0;
+}
+ 
+void *customer(void *number) {
+    int num = *(int*)number;
+    printf("Customer %d leaving for shop.\n", num);
+    sleep(2);
+    printf("Customer %d arrived.\n", num);
+ 
+    sem_wait(&waitingRoom);                 // enter waiting room (block if full)
+    printf("Customer %d in waiting room.\n", num);
+    sem_wait(&barberChair);                 // wait for chair (block if occupied)
+    sem_post(&waitingRoom);                 // free waiting room spot
+    printf("Customer %d waking barber.\n", num);
+    sem_post(&barberPillow);                // wake the barber
+    sem_wait(&seatBelt);                    // wait for haircut to finish
+    sem_post(&barberChair);                 // leave chair
+    printf("Customer %d leaving shop.\n", num);
+    return NULL;
+}
+ 
+void *barber(void *junk) {
+    while (!allDone) {
+        printf("Barber sleeping...\n");
+        sem_wait(&barberPillow);            // sleep until customer arrives
+        if (!allDone) {
+            printf("Barber cutting hair...\n");
+            sleep(3);
+            printf("Barber done cutting.\n");
+            sem_post(&seatBelt);            // tell customer: done, you can go
+        } else {
+            printf("Barber going home.\n");
+        }
+    }
+    return NULL;
+}

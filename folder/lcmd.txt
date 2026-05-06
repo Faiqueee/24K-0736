@@ -1,0 +1,323 @@
+# =============================================================================
+# LINUX COMMANDS REFERENCE — FILE OPERATIONS
+# =============================================================================
+
+
+# =============================================================================
+# SECTION 1: NAVIGATION & DIRECTORY
+# =============================================================================
+
+pwd                         # print current directory path
+ls                          # list files
+ls -l                       # long format (permissions, size, date)
+ls -a                       # show hidden files
+ls -la                      # long format + hidden
+ls -lh                      # human readable sizes (KB, MB)
+
+cd /home/user               # go to absolute path
+cd ..                       # go up one level
+cd ~                        # go to home directory
+cd -                        # go back to previous directory
+
+mkdir myfolder              # create directory
+mkdir -p a/b/c              # create nested directories
+rmdir myfolder              # remove empty directory
+
+
+# =============================================================================
+# SECTION 2: FILE CREATION & VIEWING
+# =============================================================================
+
+touch file.txt              # create empty file / update timestamp
+cat file.txt                # print entire file contents
+cat file1.txt file2.txt     # print multiple files
+
+more file.txt               # view file page by page (forward only)
+less file.txt               # view file page by page (forward + backward)
+
+head file.txt               # first 10 lines
+head -n 5 file.txt          # first 5 lines
+tail file.txt               # last 10 lines
+tail -n 5 file.txt          # last 5 lines
+tail -f file.txt            # live follow (useful for logs)
+
+
+# =============================================================================
+# SECTION 3: COPY, MOVE, DELETE
+# =============================================================================
+
+cp file.txt copy.txt        # copy file
+cp -r folder/ backup/       # copy directory recursively
+mv file.txt newname.txt     # rename file
+mv file.txt /home/user/     # move file to another directory
+rm file.txt                 # delete file
+rm -f file.txt              # force delete (no prompt)
+rm -r folder/               # delete directory and contents
+rm -rf folder/              # force delete directory (careful!)
+
+
+# =============================================================================
+# SECTION 4: SEARCHING — find & grep
+# =============================================================================
+
+# find: search by name/type/size in directory tree
+find . -name "file.txt"             # find by exact name
+find . -name "*.c"                  # find all .c files
+find . -type f                      # find only files
+find . -type d                      # find only directories
+find . -name "*.txt" -size +1k      # files larger than 1KB
+find /home -name "*.log"            # search in /home
+
+# grep: search text INSIDE files
+grep "hello" file.txt               # find lines containing "hello"
+grep -i "hello" file.txt            # case insensitive
+grep -r "hello" .                   # recursive search in all files
+grep -n "hello" file.txt            # show line numbers
+grep -v "hello" file.txt            # lines that do NOT contain "hello"
+grep -c "hello" file.txt            # count matching lines
+grep -l "hello" *.txt               # list files that contain match
+
+
+# =============================================================================
+# SECTION 5: WORD COUNT — wc
+# =============================================================================
+
+wc file.txt                 # lines, words, bytes (all three)
+wc -l file.txt              # count lines only
+wc -w file.txt              # count words only
+wc -c file.txt              # count bytes
+wc -m file.txt              # count characters
+wc -l *.c                   # count lines in all .c files
+
+
+# =============================================================================
+# SECTION 6: SORTING — sort
+# =============================================================================
+
+sort file.txt               # sort lines alphabetically (A-Z)
+sort -r file.txt            # reverse sort (Z-A)
+sort -n file.txt            # numeric sort
+sort -rn file.txt           # reverse numeric sort
+sort -u file.txt            # sort and remove duplicates
+sort -k 2 file.txt          # sort by 2nd column/field
+sort file.txt -o out.txt    # save sorted output to file
+
+# example: sort a CSV by second column numerically
+sort -t',' -k2 -n data.csv
+
+
+# =============================================================================
+# SECTION 7: UNIQUE & DUPLICATE LINES — uniq
+# (file must be sorted first for uniq to work properly)
+# =============================================================================
+
+uniq file.txt               # remove consecutive duplicate lines
+uniq -c file.txt            # count occurrences of each line
+uniq -d file.txt            # show only duplicate lines
+uniq -u file.txt            # show only unique (non-duplicate) lines
+
+# common pattern: sort then uniq
+sort file.txt | uniq
+sort file.txt | uniq -c
+
+
+# =============================================================================
+# SECTION 8: CUT, PASTE, JOIN — column operations
+# =============================================================================
+
+cut -c1-5 file.txt          # extract characters 1 to 5 from each line
+cut -d',' -f1 file.txt      # extract field 1 using comma delimiter
+cut -d':' -f1,3 /etc/passwd # extract fields 1 and 3 from passwd
+
+paste file1.txt file2.txt   # merge files side by side (tab separated)
+paste -d',' f1.txt f2.txt   # merge with comma delimiter
+
+join file1.txt file2.txt    # join two files on common first field
+
+
+# =============================================================================
+# SECTION 9: TEXT PROCESSING — tr, sed, awk
+# =============================================================================
+
+# tr: translate or delete characters (reads from stdin)
+echo "hello" | tr 'a-z' 'A-Z'          # lowercase to uppercase
+echo "hello world" | tr -d 'l'          # delete all 'l' characters
+echo "hello   world" | tr -s ' '        # squeeze multiple spaces into one
+cat file.txt | tr ',' '\n'              # replace commas with newlines
+
+# sed: stream editor — find and replace in files
+sed 's/old/new/' file.txt               # replace first occurrence per line
+sed 's/old/new/g' file.txt             # replace ALL occurrences
+sed -i 's/old/new/g' file.txt          # replace IN PLACE (modifies file)
+sed -n '3,7p' file.txt                 # print lines 3 to 7
+sed '/pattern/d' file.txt             # delete lines matching pattern
+
+# awk: field-based text processing
+awk '{print $1}' file.txt              # print first field (space delimited)
+awk '{print $1, $3}' file.txt          # print fields 1 and 3
+awk -F',' '{print $2}' file.txt        # comma delimited, print field 2
+awk '{sum += $1} END {print sum}' f    # sum all values in column 1
+awk 'NR==3' file.txt                   # print line 3
+awk 'NR>=2 && NR<=5' file.txt          # print lines 2 to 5
+awk '{print NR, $0}' file.txt          # print line numbers
+
+
+# =============================================================================
+# SECTION 10: FILE COMPARISON — diff & cmp
+# =============================================================================
+
+diff file1.txt file2.txt        # show differences line by line
+diff -u file1.txt file2.txt     # unified format (easier to read)
+diff -i file1.txt file2.txt     # ignore case differences
+
+cmp file1.txt file2.txt         # byte-by-byte comparison (silent if same)
+cmp -l file1.txt file2.txt      # list all differing bytes
+
+
+# =============================================================================
+# SECTION 11: FILE PERMISSIONS — chmod, chown
+# =============================================================================
+
+ls -l                       # view permissions
+
+chmod 755 file.txt          # rwxr-xr-x (owner=rwx, group=rx, others=rx)
+chmod 644 file.txt          # rw-r--r-- (owner=rw, group=r, others=r)
+chmod +x script.sh          # add execute permission to all
+chmod -x script.sh          # remove execute permission
+chmod u+w file.txt          # add write for owner only
+
+chown user file.txt         # change owner
+chown user:group file.txt   # change owner and group
+
+# permission digits: 4=read, 2=write, 1=execute
+# 7 = 4+2+1 = rwx
+# 6 = 4+2   = rw-
+# 5 = 4+1   = r-x
+# 4 = 4     = r--
+
+
+# =============================================================================
+# SECTION 12: PIPES & REDIRECTION
+# =============================================================================
+
+command > file.txt          # redirect output to file (overwrite)
+command >> file.txt         # append output to file
+command < file.txt          # use file as input
+command 2> errors.txt       # redirect error output
+command > out.txt 2>&1      # redirect both stdout and stderr
+
+cmd1 | cmd2                 # pipe: output of cmd1 becomes input of cmd2
+
+# useful pipe combinations
+ls -l | grep ".txt"                     # list only txt files
+cat file.txt | sort | uniq              # sort and deduplicate
+ps aux | grep firefox                   # find process by name
+cat file.txt | wc -l                    # count lines via pipe
+find . -name "*.c" | xargs wc -l       # count lines in all .c files
+
+
+# =============================================================================
+# SECTION 13: PROCESS COMMANDS
+# =============================================================================
+
+ps                          # processes in current shell
+ps aux                      # all running processes (detailed)
+top                         # live process monitor
+kill PID                    # send SIGTERM to process
+kill -9 PID                 # force kill (SIGKILL)
+killall firefox             # kill all processes by name
+jobs                        # list background jobs
+bg                          # resume job in background
+fg                          # bring job to foreground
+./program &                 # run program in background
+
+
+# =============================================================================
+# SECTION 14: FILE CONVERSION & ENCODING
+# =============================================================================
+
+# dos2unix / unix2dos — convert line endings
+dos2unix file.txt           # Windows \r\n → Unix \n
+unix2dos file.txt           # Unix \n → Windows \r\n
+
+# iconv — convert file encoding
+iconv -f UTF-8 -t ASCII file.txt                    # UTF-8 to ASCII
+iconv -f ISO-8859-1 -t UTF-8 input.txt -o out.txt  # Latin to UTF-8
+
+# base64 encode/decode
+base64 file.txt             # encode file to base64
+base64 -d encoded.txt       # decode base64
+
+# xxd — hex dump
+xxd file.txt                # show file as hex
+xxd -r hexdump.txt          # reverse: hex back to binary
+
+# file — detect file type
+file file.txt               # shows: ASCII text, ELF binary, etc.
+
+
+# =============================================================================
+# SECTION 15: COMPRESSION & ARCHIVING
+# =============================================================================
+
+tar -cvf archive.tar folder/            # create tar archive
+tar -xvf archive.tar                    # extract tar archive
+tar -czvf archive.tar.gz folder/        # create compressed (gzip)
+tar -xzvf archive.tar.gz               # extract gzip archive
+tar -cjvf archive.tar.bz2 folder/      # create compressed (bzip2)
+tar -xjvf archive.tar.bz2             # extract bzip2 archive
+
+gzip file.txt               # compress → file.txt.gz
+gzip -d file.txt.gz         # decompress
+gunzip file.txt.gz          # same as gzip -d
+
+zip archive.zip file1 file2             # create zip
+unzip archive.zip                       # extract zip
+unzip archive.zip -d /target/           # extract to specific folder
+
+
+# =============================================================================
+# SECTION 16: DISK & SYSTEM INFO
+# =============================================================================
+
+df -h                       # disk space usage (human readable)
+du -sh folder/              # size of a directory
+du -sh *                    # size of each item in current directory
+free -h                     # RAM usage
+uname -a                    # kernel and system info
+whoami                      # current user
+hostname                    # machine name
+date                        # current date and time
+uptime                      # how long system has been running
+
+
+# =============================================================================
+# SECTION 17: USEFUL ONE-LINERS (COMBINATIONS)
+# =============================================================================
+
+# count occurrences of each word in a file
+cat file.txt | tr ' ' '\n' | sort | uniq -c | sort -rn
+
+# find 5 largest files in current directory
+du -sh * | sort -rh | head -5
+
+# find all .c files and count total lines
+find . -name "*.c" | xargs wc -l
+
+# search for a word and show surrounding context
+grep -n -A 2 -B 2 "keyword" file.txt
+
+# replace word in all .txt files in directory
+sed -i 's/oldword/newword/g' *.txt
+
+# print lines 10 to 20 of a file
+awk 'NR>=10 && NR<=20' file.txt
+
+# remove blank lines from a file
+sed '/^$/d' file.txt
+
+# print only non-empty lines
+grep -v "^$" file.txt
+
+# list all unique extensions in a directory
+find . -type f | sed 's/.*\.//' | sort | uniq

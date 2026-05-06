@@ -1,0 +1,362 @@
+// =============================================================================
+// OS LAB 08 REFERENCE — SIGNALS
+// Compile: gcc -o out file.c
+// With threads: gcc -o out file.c -pthread
+// =============================================================================
+ 
+ 
+// =============================================================================
+// SECTION 1: SIGINT — basic custom handler (Ctrl+C caught, process keeps running)
+// =============================================================================
+ 
+#include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
+ 
+void signal_handler(int num) {
+    printf("I am here because Ctrl+C was pressed\n");
+}
+ 
+int main() {
+    signal(SIGINT, signal_handler);     // replace default Ctrl+C behavior
+    while (1) {
+        sleep(1);
+        printf("Process Running\n");
+    }
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 2: SIGINT — toggle pause/resume on each Ctrl+C (state machine)
+// =============================================================================
+ 
+#include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
+ 
+int state = 0;
+ 
+void signal_handler(int num) {
+    if (state == 0) {
+        printf("Program paused\n");
+        state = 1;
+    } else {
+        printf("Program resumed\n");
+        state = 0;
+    }
+    signal(SIGINT, signal_handler);     // re-register after each trigger
+}
+ 
+int main() {
+    signal(SIGINT, signal_handler);
+    while (1) {
+        sleep(1);
+        printf("Program running\n");
+    }
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 3: SIGALRM — alarm() schedules a signal after N seconds
+// alarm(N) → kernel sends SIGALRM after N seconds → default kills process
+// =============================================================================
+ 
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
+ 
+int alarmFlag = 0;
+ 
+void alarmHandler() {
+    printf("An ALARM clock signal was received\n");
+    alarmFlag = 1;
+}
+ 
+int main() {
+    signal(SIGALRM, alarmHandler);      // install handler before setting alarm
+    alarm(5);                           // send SIGALRM after 5 seconds
+    printf("Looping...\n");
+    while (!alarmFlag) {
+        pause();                        // suspend process until ANY signal arrives
+        printf("Loop ends due to alarm signal\n");
+    }
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 4: SIGQUIT — catch both SIGINT (Ctrl+C) and SIGQUIT (Ctrl+\)
+// in one handler using signo to distinguish
+// =============================================================================
+ 
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
+ 
+void sig_handler(int signo) {
+    if (signo == SIGINT)
+        printf("\nReceived SIGINT\n");
+    else if (signo == SIGQUIT)
+        printf("\nReceived SIGQUIT\n");
+}
+ 
+int main(void) {
+    if (signal(SIGINT,  sig_handler) == SIG_ERR) printf("\nCan't catch SIGINT\n");
+    if (signal(SIGQUIT, sig_handler) == SIG_ERR) printf("\nCan't catch SIGQUIT\n");
+    while (1)
+        sleep(1);
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 5: SIGTSTP — block Ctrl+Z (process cannot be suspended)
+// =============================================================================
+ 
+#include <stdio.h>
+#include <signal.h>
+ 
+void sighandler(int sig_num) {
+    printf("Cannot execute Ctrl+Z\n");
+    signal(SIGTSTP, sighandler);        // re-register so it keeps blocking
+}
+ 
+int main() {
+    signal(SIGTSTP, sighandler);
+    while (1)
+        printf("Process Running.....\n");
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 6: PROTECTING CRITICAL CODE — ignore Ctrl+C during critical section,
+// restore old handler after
+// =============================================================================
+ 
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
+ 
+int main() {
+    void (*oldHandler)();
+ 
+    printf("I can be Ctrl+C'd\n");
+    sleep(5);
+ 
+    oldHandler = signal(SIGINT, SIG_IGN);   // ignore Ctrl+C — save old handler
+    printf("Critical section — Ctrl+C ignored\n");
+    sleep(5);                               // critical work here
+ 
+    signal(SIGINT, oldHandler);             // restore old handler
+    printf("Critical section done — Ctrl+C active again\n");
+    sleep(5);
+ 
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 7: kill() — send signal from one process to another via fork()
+// Parent installs SIGCHLD handler. Child exits with random code.
+// Parent uses pause() to wait for the signal.
+// =============================================================================
+ 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <time.h>
+ 
+void proc_exit(int sig) {
+    int wstat;
+    pid_t pid;
+    while (1) {
+        pid = wait3(&wstat, WNOHANG, NULL);     // non-blocking wait
+        if (pid == 0 || pid == -1) {
+            fprintf(stdout, "return value of wait3() is %d\n", pid);
+            return;
+        }
+        fprintf(stdout, "Return code: %d\n", wstat);
+    }
+}
+ 
+int main() {
+    srand(time(NULL));
+    signal(SIGCHLD, proc_exit);             // handle child termination
+ 
+    switch (fork()) {
+        case -1:
+            perror("fork");
+            exit(EXIT_FAILURE);
+        case 0:                             // CHILD
+            printf("Child (PID: %d) alive temporarily\n", getpid());
+            int ret_code = rand() % 100;
+            printf("Child exiting with code: %d\n", ret_code);
+            exit(ret_code);
+        default:                            // PARENT
+            printf("Parent (PID: %d) waiting for child...\n", getpid());
+            pause();                        // suspend until SIGCHLD arrives
+    }
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 8: sigaction — modern, reliable signal handling
+// signal() is simple but sigaction() gives more control:
+//   sa.sa_handler  → your handler function
+//   sa.sa_mask     → signals to block during handler execution
+//   sa.sa_flags    → modifiers (SA_RESTART, SA_RESETHAND, etc.)
+// =============================================================================
+ 
+#define _XOPEN_SOURCE 700
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <unistd.h>
+ 
+void sigint_handler(int signum) {
+    fprintf(stdout, "Ctrl+C (SIGINT) received. Exiting...\n");
+    exit(signum);
+}
+ 
+int main() {
+    struct sigaction sa;
+    sa.sa_handler = sigint_handler;     // which function handles it
+    sigemptyset(&sa.sa_mask);           // no extra signals blocked during handler
+    sa.sa_flags = 0;                    // no special flags
+ 
+    if (sigaction(SIGINT, &sa, NULL) == -1) {
+        perror("sigaction");
+        return EXIT_FAILURE;
+    }
+ 
+    while (1) {
+        printf("Running — press Ctrl+C\n");
+        sleep(1);
+    }
+    return EXIT_SUCCESS;
+}
+ 
+ 
+// =============================================================================
+// SECTION 9: sigaction — lab activity conversion
+// Original used signal() for SIGUSR1, SIGKILL, SIGSTOP
+// sigaction version below (note: SIGKILL and SIGSTOP cannot be caught — ever)
+// =============================================================================
+ 
+#define _XOPEN_SOURCE 700
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
+ 
+void sig_handler(int signo) {
+    if (signo == SIGUSR1)
+        printf("Received SIGUSR1\n");
+}
+ 
+int main(void) {
+    struct sigaction sa;
+    sa.sa_handler = sig_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+ 
+    // SIGUSR1 — can be caught
+    if (sigaction(SIGUSR1, &sa, NULL) == -1)
+        printf("\nCan't catch SIGUSR1\n");
+ 
+    // SIGKILL and SIGSTOP CANNOT be caught, blocked, or ignored — kernel enforced
+    // sigaction(SIGKILL, ...) and sigaction(SIGSTOP, ...) will always fail
+ 
+    while (1)
+        sleep(1);
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// SECTION 10: SIGNALS WITH THREADS — pthread_kill sends signal to specific thread
+// Each thread registers its own handler for SIGUSR1
+// =============================================================================
+ 
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <signal.h>
+#include <unistd.h>
+#define NUM_THREADS 4
+ 
+pthread_t threads[NUM_THREADS];
+ 
+void sigusr1_handler(int signum) {
+    pthread_t tid  = pthread_self();
+    pid_t pid      = getpid();
+    pid_t ppid     = getppid();
+    printf("Thread %lu received SIGUSR1 (PPID: %u, PID: %u)\n",
+           (unsigned long)tid, ppid, pid);
+}
+ 
+void *thread_function(void *arg) {
+    signal(SIGUSR1, sigusr1_handler);   // each thread registers its own handler
+    while (1)
+        sleep(1);
+    return NULL;
+}
+ 
+int main() {
+    for (int i = 0; i < NUM_THREADS; i++) {
+        if (pthread_create(&threads[i], NULL, thread_function, NULL) != 0) {
+            perror("pthread_create");
+            exit(EXIT_FAILURE);
+        }
+    }
+ 
+    pthread_t main_tid = pthread_self();
+    pid_t pid  = getpid();
+    pid_t ppid = getppid();
+    printf("Main Thread: %lu | PPID: %u | PID: %u\n",
+           (unsigned long)main_tid, ppid, pid);
+ 
+    kill(pid, SIGUSR1);                     // send SIGUSR1 to whole process
+    pthread_kill(threads[2], SIGUSR1);      // send SIGUSR1 to thread[2] specifically
+ 
+    for (int i = 0; i < NUM_THREADS; i++) {
+        if (pthread_join(threads[i], NULL) != 0) {
+            perror("pthread_join");
+            exit(EXIT_FAILURE);
+        }
+    }
+    return 0;
+}
+ 
+ 
+// =============================================================================
+// QUICK REFERENCE
+// -----------------------------------------------------------------------------
+// signal(SIGINT, handler)      → register handler (simple, less reliable)
+// signal(SIGINT, SIG_DFL)      → restore default action
+// signal(SIGINT, SIG_IGN)      → ignore the signal
+// sigaction(sig, &sa, NULL)    → register handler (modern, preferred)
+// alarm(N)                     → schedule SIGALRM after N seconds
+// pause()                      → suspend process until ANY signal arrives
+// kill(pid, sig)               → send signal to process by PID
+// kill(0, sig)                 → send to all processes in same group
+// kill(-1, sig)                → send to all processes you own
+// pthread_kill(tid, sig)       → send signal to specific thread
+// raise(sig)                   → send signal to yourself
+//
+// CANNOT catch/ignore/block:   SIGKILL, SIGSTOP
+// Common signals:
+//   SIGINT  (2)  Ctrl+C
+//   SIGQUIT (3)  Ctrl+\  (+ core dump)
+//   SIGTSTP (20) Ctrl+Z
+//   SIGKILL (9)  force kill — uncatchable
+//   SIGALRM (14) alarm clock
+//   SIGCHLD (17) child terminated
+//   SIGUSR1 (10) user defined
+//   SIGUSR2 (12) user defined
+// =============================================================================
